@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SGS Sleek ID Badge</title>
+
+  <style>
+    @import url('https://saintsgs-hub.github.io/SGS-Digital-Assets/fonts/yayusa.css');
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      font-family: Inter, Arial, sans-serif;
+    }
+
+    #badge-app {
+      position: absolute;
+      width: 100%;
+      height: 1080px; /* ALTURA TOTAL DO COMPONENTE NA PÁGINA */
+      max-width: 100%;
+      overflow: hidden;
+      background: transparent;
+      isolation: isolate;
+    }
+
+    #badge-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="badge-app">
+    <canvas id="badge-canvas"></canvas>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'https://esm.sh/three@0.169.0'
+    import { GLTFLoader } from 'https://esm.sh/three@0.169.0/examples/jsm/loaders/GLTFLoader.js'
+    import RAPIER from 'https://esm.sh/@dimforge/rapier3d-compat@0.12.0'
+    import { RoundedBoxGeometry } from 'https://esm.sh/three@0.169.0/examples/jsm/geometries/RoundedBoxGeometry.js'
+
+    try {
+      await document.fonts.load('60px "Yayusa"')
+      await document.fonts.ready
+    } catch (error) {
+      console.warn('Yayusa font did not load; continuing with fallback font.', error)
+    }
+
+    const app = document.getElementById('badge-app')
+    const canvas = document.getElementById('badge-canvas')
+
+    // ==================================================
+    // TEXTO PRINCIPAL DO CARD ID
+    // ALTERE AQUI O QUE FICA ESCRITO NO CRACHÁ
+    // ==================================================
+    const NAME = 'SGS Digital'                    // NOME GRANDE
+    const ROLE = 'Secret Association of Premium Websites'  // CARGO / SUBTÍTULO
+    const EMAIL = 'equipe.sgsdigital@zohomail.com'         // BLOCO EMAIL
+    const PHONE = '+55 (62) 99115-9228'       // BLOCO PHONE
+    const TAGLINE = 'Important Member of the Secret Association of Premium Websites' // BLOCO NOTES
+    const INITIALS = 'SGS'                   // INICIAIS NO CÍRCULO
+
+    const BADGE_IMAGE_URLS = [
+      'https://saintsgs-hub.github.io/SGS-Digital-Assets/images/sleekidbadge.png',
+      'https://raw.githubusercontent.com/SaintSGS-Hub/SGS-Digital-Assets/main/images/sleekidbadge.png',
+      'https://saintsgs-hub.github.io/SGS-Digital-Assets/images/SleekIDCardSGS.png',
+      'https://raw.githubusercontent.com/SaintSGS-Hub/SGS-Digital-Assets/main/images/SleekIDCardSGS.png'
+    ]
+    const raycaster = new THREE.Raycaster()
+    const pointer = new THREE.Vector2()
+    const clock = new THREE.Clock()
+
+    const scene = new THREE.Scene()
+    scene.background = null
+
+    const camera = new THREE.PerspectiveCamera(25, 1, 0.1, 100)
+    camera.position.set(0, 0, 9)
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setClearColor(0x000000, 0)
+
+    const ambient = new THREE.AmbientLight(0xffffff, Math.PI * 0.92)
+    scene.add(ambient)
+
+    const light1 = new THREE.DirectionalLight(0xffffff, 1.8)
+    light1.position.set(0, -1, 5)
+    scene.add(light1)
+
+    const light2 = new THREE.DirectionalLight(0xffffff, 2.2)
+    light2.position.set(-1, -1, 1)
+    scene.add(light2)
+
+    const light3 = new THREE.DirectionalLight(0xffffff, 2.2)
+    light3.position.set(1, 1, 1)
+    scene.add(light3)
+
+    const light4 = new THREE.DirectionalLight(0xffffff, 3.6)
+    light4.position.set(-10, 0, 14)
+    scene.add(light4)
+
+    function makeBadgeTexture() {
+      const c = document.createElement('canvas')
+      c.width = 1200
+      c.height = 1700
+      const ctx = c.getContext('2d')
+      const texture = new THREE.CanvasTexture(c)
+
+      const bgImg = new Image()
+      bgImg.crossOrigin = 'anonymous'
+      let bgImgAttempt = 0
+
+      function loadBadgeBackground() {
+        if (bgImgAttempt >= BADGE_IMAGE_URLS.length) {
+          console.warn('Badge background image did not load from any configured URL.')
+          return
+        }
+
+        bgImg.src = BADGE_IMAGE_URLS[bgImgAttempt]
+        bgImgAttempt += 1
+      }
+
+      bgImg.onload = () => {
+        ctx.save()
+
+        // OPACIDADE DA IMAGEM DE FUNDO
+        ctx.globalAlpha = 0.5
+
+        // DESENHA A IMAGEM POR CIMA DO GRADIENTE E ANTES DOS TEXTOS
+        ctx.drawImage(bgImg, 0, 0, c.width, c.height)
+
+        ctx.restore()
+        texture.needsUpdate = true
+      }
+
+      bgImg.onerror = loadBadgeBackground
+      loadBadgeBackground()
+
+
+      // ==================================================
+      // CORES BASE DO CARD ID (FRENTE)
+      // ALTERE AQUI O FUNDO / PALETA PRINCIPAL DO CRACHÁ
+      // ==================================================
+      const g = ctx.createLinearGradient(0, 0, 0, c.height)
+      g.addColorStop(0, '#1c1c1c')
+      g.addColorStop(1, '#383838')
+      ctx.fillStyle = g
+      ctx.fillRect(0, 0, c.width, c.height)
+
+      // BRILHO / REFLEXO DECORATIVO DA FRENTE DO CRACHÁ
+      ctx.fillStyle = 'rgba(255,255,255,0.06)'
+      ctx.beginPath()
+      ctx.ellipse(c.width * 0.23, c.height * 0.11, 180, 110, -0.45, 0, Math.PI * 2)
+      ctx.fill()
+
+      // "FURO" DECORATIVO IMPRESSO NO DESIGN DA FRENTE
+      ctx.fillStyle = 'rgba(230,147,14,0.5)'
+      roundRect(ctx, c.width / 2 - 56, 36, 112, 22, 11)
+      ctx.fill()
+
+      // TEXTO PEQUENO DO TOPO
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'alphabetic'
+      ctx.fillStyle = 'rgba(255,255,255,1.6)' // COR DO TEXTO PEQUENO DO TOPO
+      ctx.font = '700 32px Inter, Arial, sans-serif' // FONTE/TAMANHO DO TOPO
+      ctx.fillText('SGS SHIP', 70, 98) // POSIÇÃO DO TEXTO PEQUENO DO TOPO
+
+      // CÍRCULO DAS INICIAIS
+      ctx.beginPath()
+      ctx.arc(c.width / 5, 350, 120, 0, Math.PI * 2) // POSIÇÃO E TAMANHO DO CÍRCULO
+      ctx.fillStyle = 'rgba(16,16,16,0)' // COR DO CÍRCULO DAS INICIAIS 1.2
+      ctx.fill()
+      ctx.strokeStyle = 'rgba(230,147,14,0)' // BORDA DO CÍRCULO 1.2
+      ctx.lineWidth = 8
+      ctx.stroke()
+
+      // INICIAIS
+      ctx.fillStyle = 'rgba(255,255,255,0)' // COR DAS INICIAIS 0.62
+      ctx.font = '700 96px Inter, Arial, sans-serif' // FONTE/TAMANHO DAS INICIAIS
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(INITIALS, c.width / 5, 360) // POSIÇÃO DAS INICIAIS
+
+      // NOME GRANDE
+      ctx.fillStyle = 'rgba(255,255,255,0)' // COR DO NOME GRANDE 0.62
+      ctx.font = '700 90px Inter, Arial, sans-serif' // FONTE/TAMANHO DO NOME
+      wrapCenter(ctx, NAME, c.width / 4, 620, 920, 94) // POSIÇÃO / LARGURA / ESPAÇAMENTO DO NOME
+
+      // CARGO / SUBTÍTULO
+      ctx.fillStyle = 'rgba(255,255,255,1.90)' // COR DO SUBTÍTULO 0.62
+      ctx.font = '500 28px Inter, Arial, sans-serif' // FONTE/TAMANHO DO SUBTÍTULO
+      ctx.fillText(ROLE, c.width / 4, 760) // POSIÇÃO DO SUBTÍTULO
+
+      // BLOCOS DE INFORMAÇÃO
+      drawInfo(ctx, 40, 860, 1060, 120, 'EMAIL', EMAIL)
+      drawInfo(ctx, 40, 1005, 1060, 120, 'PHONE', PHONE)
+      drawInfo(ctx, 40, 1150, 1060, 210, 'NOTES', TAGLINE)
+
+      // TEXTO RODAPÉ
+      ctx.fillStyle = 'rgba(255,255,255,1.8)' // COR DO TEXTO RODAPÉ 0.7
+      ctx.font = '700 30px Inter, Arial, sans-serif'
+      ctx.textAlign = 'left'
+      ctx.fillText('SGS IDENTIFICATION PASS', 70, 1602) // TEXTO RODAPÉ / POSIÇÃO
+
+      // CÓDIGO DE BARRAS DECORATIVO
+      for (let i = 0; i < 44; i++) {
+        const x = 860 + i * 5 // POSIÇÃO HORIZONTAL DO CÓDIGO DE BARRAS
+        const h = 36 + ((i % 4) * 7) // ALTURA DAS BARRAS
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,1.85)' : 'rgba(255,255,255,0.78)' // COR DAS BARRAS 0.75 0.18
+        ctx.fillRect(x, 1545, 3, h)
+      }
+
+      texture.colorSpace = THREE.SRGBColorSpace
+      texture.anisotropy = 16
+      return texture
+    }
+
+    function makeBandTexture() {
+      const c = document.createElement('canvas')
+      c.width = 1280  // RESOLUÇÃO DA TEXTURA DA LANYARD
+      c.height = 256  // ALTURA DA TEXTURA DA LANYARD
+      const ctx = c.getContext('2d')
+
+      ctx.clearRect(0, 0, c.width, c.height)
+
+      // ==================================================
+      // TEXTURA / CORES DA LANYARD
+      // ALTERE AQUI PARA MUDAR VISUAL DO TECIDO DA FITA
+      // ==================================================
+      const base = ctx.createLinearGradient(0, 0, c.width, 0)
+      base.addColorStop(0, 'rgba(43,43,43,1.96)')
+      base.addColorStop(0.15, 'rgba(69,69,69,1.98)')
+      base.addColorStop(0.5, 'rgba(23,23,23,1)')
+      base.addColorStop(0.85, 'rgba(181,134,63,1.98)')
+      base.addColorStop(1, 'rgba(43,40,34,1.96)')
+      ctx.fillStyle = base
+      ctx.fillRect(0, 0, c.width, c.height)
+
+      // TRAMA DIAGONAL 1 DO TECIDO
+      ctx.globalAlpha = 0.11
+      ctx.strokeStyle = '#8f8f8f' // COR DA TRAMA ESCURA
+      ctx.lineWidth = 7           // ESPESSURA DA TRAMA
+      for (let x = -c.height; x < c.width + c.height; x += 18) { // DENSIDADE DA TRAMA
+        ctx.beginPath()
+        ctx.moveTo(x, 0)
+        ctx.lineTo(x + c.height, c.height)
+        ctx.stroke()
+      }
+
+      // TRAMA DIAGONAL 2 DO TECIDO
+      ctx.globalAlpha = 0.08
+      ctx.strokeStyle = '#ffffff' // COR DA TRAMA CLARA
+      for (let x = 0; x < c.width + c.height; x += 24) { // DENSIDADE DA SEGUNDA TRAMA
+        ctx.beginPath()
+        ctx.moveTo(x, 0)
+        ctx.lineTo(x - c.height, c.height)
+        ctx.stroke()
+      }
+
+      // FAIXAS LATERAIS DA FITA
+      ctx.globalAlpha = 1
+      ctx.fillStyle = 'rgba(0,0,0,0.12)' // FAIXA ESCURA
+      ctx.fillRect(44, 0, 4, c.height)
+      ctx.fillRect(c.width - 48, 0, 4, c.height)
+
+      ctx.fillStyle = 'rgba(255,255,255,0.20)' // FAIXA CLARA
+      ctx.fillRect(58, 0, 2, c.height)
+      ctx.fillRect(c.width - 60, 0, 2, c.height)
+      
+      // TEXTO DA MARCA NA LANYARD COM A MESMA TEXTURA DA FITA
+const textLayer = document.createElement('canvas')
+textLayer.width = c.width
+textLayer.height = c.height
+const tctx = textLayer.getContext('2d')
+
+// 1) DESENHA O TEXTO COMO MÁSCARA
+for (let x = 200; x < c.width - 200; x += 600) {
+  tctx.save()
+  tctx.translate(x, c.height / 2)
+  tctx.rotate(0)
+
+  // FONTE DO TEXTO DA LANYARD
+  tctx.font = '60px "Yayusa", sans-serif'
+  tctx.textAlign = 'center'
+  tctx.textBaseline = 'middle'
+
+  // A cor aqui não importa muito, porque ela vira máscara
+  tctx.fillStyle = '#ffffff'
+  tctx.fillText('◆ , 6 ,   ]868.`-', 0, 0)
+
+  tctx.restore()
+}
+
+// 2) PREENCHE O TEXTO COM A MESMA TEXTURA DA LANYARD
+tctx.globalCompositeOperation = 'source-in'
+
+// IMPORTANTE:
+// usar a própria textura da lanyard, mas levemente deslocada,
+// para o texto não sumir no fundo
+tctx.drawImage(c, 350, 0)
+
+// 3) DESENHA O TEXTO TEXTURIZADO POR CIMA DA FITA
+ctx.save()
+ctx.globalAlpha = 0.1
+ctx.drawImage(textLayer, 0, 0)
+ctx.restore()
+
+// 4) CONTORNO LEVE PARA O TEXTO NÃO SUMIR
+ctx.save()
+ctx.globalAlpha = 0.22
+ctx.strokeStyle = 'rgba(255,255,255,0.70)'
+ctx.lineWidth = 2.2
+ctx.font = '60px "Yayusa", sans-serif'
+ctx.textAlign = 'center'
+ctx.textBaseline = 'middle'
+
+for (let x = 200; x < c.width - 200; x += 600) {
+  ctx.save()
+  ctx.translate(x, c.height / 2)
+  ctx.rotate(0)
+  ctx.strokeText('◆ , 6 ,   ]868.`-', 0, 0)
+  ctx.restore()
+}
+
+ctx.restore()
+
+      const texture = new THREE.CanvasTexture(c)
+      texture.colorSpace = THREE.SRGBColorSpace
+      texture.wrapS = THREE.RepeatWrapping
+      texture.wrapT = THREE.RepeatWrapping
+      texture.repeat.set(-2, 1) // REPETIÇÃO DA TEXTURA AO LONGO DA LANYARD
+      texture.anisotropy = 1
+      texture.needsUpdate = true
+      return texture
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath()
+      ctx.moveTo(x + r, y)
+      ctx.arcTo(x + w, y, x + w, y + h, r)
+      ctx.arcTo(x + w, y + h, x, y + h, r)
+      ctx.arcTo(x, y + h, x, y, r)
+      ctx.arcTo(x, y, x + w, y, r)
+      ctx.closePath()
+    }
+
+    function wrapCenter(ctx, text, x, y, maxWidth, lineHeight) {
+      const words = text.split(' ')
+      let line = ''
+      let yy = y
+      for (let i = 0; i < words.length; i++) {
+        const test = line + words[i] + ' '
+        if (ctx.measureText(test).width > maxWidth && i > 0) {
+          ctx.fillText(line.trim(), x, yy)
+          line = words[i] + ' '
+          yy += lineHeight
+        } else {
+          line = test
+        }
+      }
+      ctx.fillText(line.trim(), x, yy)
+    }
+
+    function wrapLeft(ctx, text, x, y, maxWidth, lineHeight) {
+      const words = text.split(' ')
+      let line = ''
+      let yy = y
+      for (let i = 0; i < words.length; i++) {
+        const test = line + words[i] + ' '
+        if (ctx.measureText(test).width > maxWidth && i > 0) {
+          ctx.fillText(line.trim(), x, yy)
+          line = words[i] + ' '
+          yy += lineHeight
+        } else {
+          line = test
+        }
+      }
+      ctx.fillText(line.trim(), x, yy)
+    }
+
+    function drawInfo(ctx, x, y, w, h, label, value) {
+      // ==================================================
+      // ESTILO DOS BLOCOS EMAIL / PHONE / NOTES
+      // ALTERE AQUI CORES, FONTE E ESPAÇAMENTO DESSES BLOCOS
+      // ==================================================
+      ctx.fillStyle = 'rgba(255,255,255,0.03)' // FUNDO DO BLOCO
+      roundRect(ctx, x, y, w, h, 18)
+      ctx.fill()
+
+      ctx.fillStyle = 'rgba(255,255,255,1.8)' // COR DO LABEL (EMAIL, PHONE, NOTES)
+      ctx.font = '600 18px Inter, Arial, sans-serif'
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'alphabetic'
+      ctx.fillText(label, x + 26, y + 34)
+
+      ctx.fillStyle = '#ffffff' // COR DO VALOR
+      ctx.font = '600 38px Inter, Arial, sans-serif'
+      wrapLeft(ctx, value, x + 26, y + 74, w - 52, 34)
+    }
+
+    function updateRibbonGeometry(geometry, points, camera, width) {
+      const positions = []
+      const uvs = []
+      const indices = []
+
+      let totalLength = 0
+      const lengths = [0]
+      for (let i = 1; i < points.length; i++) {
+        totalLength += points[i - 1].distanceTo(points[i])
+        lengths.push(totalLength)
+      }
+
+      for (let i = 0; i < points.length; i++) {
+        const prev = points[Math.max(0, i - 1)]
+        const next = points[Math.min(points.length - 1, i + 1)]
+        const tangent = next.clone().sub(prev).normalize()
+        const viewDir = camera.position.clone().sub(points[i]).normalize()
+        let side = new THREE.Vector3().crossVectors(tangent, viewDir).normalize()
+        if (!Number.isFinite(side.x)) side = new THREE.Vector3(1, 0, 0)
+        side.multiplyScalar(width * 0.4) // LARGURA REAL DA LANYARD
+
+        const left = points[i].clone().add(side)
+        const right = points[i].clone().sub(side)
+
+        positions.push(left.x, left.y, left.z)
+        positions.push(right.x, right.y, right.z)
+
+        const u = totalLength > 0 ? lengths[i] / totalLength : 0
+        uvs.push(u, 1)
+        uvs.push(u, 0)
+
+        if (i < points.length - 1) {
+          const a = i * 2
+          const b = a + 1
+          const c = a + 2
+          const d = a + 3
+          indices.push(a, b, c, b, d, c)
+        }
+      }
+
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+      geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+      geometry.setIndex(indices)
+      geometry.computeVertexNormals()
+      geometry.computeBoundingSphere()
+    }
+
+    function placeConnector(mesh, start, end) {
+      // ==================================================
+      // ESTE É O CONECTOR ENTRE A LANYARD E O CARD
+      // MEXA NO lowerConnector MAIS ABAIXO PARA VISUAL/ESPESSURA
+      // ==================================================
+      const dir = end.clone().sub(start)
+      const len = dir.length()
+      if (len < 0.0001) {
+        mesh.visible = false
+        return
+      }
+      mesh.visible = true
+      mesh.position.copy(start).add(end).multiplyScalar(0.5)
+      mesh.scale.set(1, len, 1)
+      mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize())
+    }
+
+    await RAPIER.init()
+
+    const world = new RAPIER.World({ x: 0, y: -40, z: 0 })
+
+    function segmentDesc(x, y, z) {
+      return RAPIER.RigidBodyDesc.dynamic()
+        .setTranslation(x, y, z) // POSIÇÃO INICIAL DOS SEGMENTOS DA LANYARD
+        .setLinearDamping(2)     // AMORTECIMENTO DE MOVIMENTO
+        .setAngularDamping(2)    // AMORTECIMENTO DE ROTAÇÃO
+        .setCanSleep(true)
+    }
+
+    // ==================================================
+    // PONTOS FÍSICOS DA LANYARD
+    // MEXER NESSES X/Y/Z ALTERA A QUEDA / CURVA INICIAL DA FITA
+    // ==================================================
+    const fixed = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 4, 0)) // PONTO FIXO NO TOPO
+    const j1 = world.createRigidBody(segmentDesc(0.5, 4, 0))
+    const j2 = world.createRigidBody(segmentDesc(1.0, 4, 0))
+    const j3 = world.createRigidBody(segmentDesc(1.5, 4, 0))
+    const card = world.createRigidBody(segmentDesc(2.0, 4, 0))
+
+    world.createCollider(RAPIER.ColliderDesc.ball(0.1), j1)
+    world.createCollider(RAPIER.ColliderDesc.ball(0.1), j2)
+    world.createCollider(RAPIER.ColliderDesc.ball(0.1), j3)
+    world.createCollider(RAPIER.ColliderDesc.cuboid(0.8, 1.125, 0.04), card) // ÁREA FÍSICA DO CRACHÁ
+
+    // ==================================================
+    // TAMANHO DOS TRECHOS DA LANYARD
+    // O "1" AQUI É O COMPRIMENTO DE CADA TRECHO DA CORDA/FITA
+    // ==================================================
+    world.createImpulseJoint(RAPIER.JointData.rope(1, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }), fixed, j1, true)
+    world.createImpulseJoint(RAPIER.JointData.rope(1, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }), j1, j2, true)
+    world.createImpulseJoint(RAPIER.JointData.rope(1, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }), j2, j3, true)
+
+    // ==================================================
+    // PONTO ONDE A LANYARD CONECTA NO CARD
+    // ALTERE O Y (1.48) PARA SUBIR/DESCER A CONEXÃO NO CRACHÁ
+    // ==================================================
+    world.createImpulseJoint(RAPIER.JointData.spherical({ x: 0, y: 0, z: 0 }, { x: 0, y: 1.48, z: 0 }), j3, card, true)
+
+    function v3(v) { return new THREE.Vector3(v.x, v.y, v.z) }
+    function q4(q) { return new THREE.Quaternion(q.x, q.y, q.z, q.w) }
+
+    const curve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(),
+      new THREE.Vector3(),
+      new THREE.Vector3(),
+      new THREE.Vector3()
+    ])
+    curve.curveType = 'chordal'
+
+    // ==================================================
+    // MATERIAL VISUAL DA LANYARD
+    // ALTERE AQUI OPACIDADE / FACE / MAPA / ETC
+    // ==================================================
+    const bandGeometry = new THREE.BufferGeometry()
+    const bandMaterial = new THREE.MeshBasicMaterial({
+      map: makeBandTexture(),
+      transparent: true,
+      opacity: 0.98,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      depthTest: false,
+      toneMapped: false
+    })
+    const bandMesh = new THREE.Mesh(bandGeometry, bandMaterial)
+    scene.add(bandMesh)
+
+    // ==================================================
+    // ARGOLA SUPERIOR DO TOPO
+    // AQUI VOCÊ MUDA TAMANHO / ESPESSURA / MATERIAL / COR DA ARGOLA DO TOPO
+    // ==================================================
+    const topClasp = new THREE.Mesh(
+      new THREE.TorusGeometry(0.12, 0.02, 18, 36),
+      new THREE.MeshStandardMaterial({ color: 0x1c1c1c, metalness: 1, roughness: 0.26 })
+    )
+    topClasp.rotation.x = Math.PI / 2
+    scene.add(topClasp)
+
+    const group = new THREE.Group()
+    scene.add(group)
+
+    const hitPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.92, 2.66), // ÁREA CLICÁVEL PARA ARRASTAR O CRACHÁ
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.001, side: THREE.DoubleSide })
+    )
+    group.add(hitPlane)
+
+    // ==================================================
+    // COR / MATERIAL / CORPO DO CARD ID
+    // ISSO CONTROLA O VOLUME 3D DO CRACHÁ E SUA PARTE TRASEIRA BASE
+    // ==================================================
+    const badgeBody = new THREE.Mesh(
+      new RoundedBoxGeometry(1.6, 2.25, 0.08, 6, 0.13), // LARGURA / ALTURA / ESPESSURA / ARREDONDAMENTO
+      new THREE.MeshPhysicalMaterial({
+        color: 0x0a0a0a,       // COR BASE DO CORPO/TRASEIRA DO CRACHÁ
+        roughness: 0.42,
+        metalness: 0.08,
+        clearcoat: 0.24,
+        clearcoatRoughness: 0.4
+      })
+    )
+    group.add(badgeBody)
+
+    // ==================================================
+    // FRENTE DO CARD ID
+    // A TEXTURA GERADA EM makeBadgeTexture() É A FRENTE VISÍVEL
+    // ==================================================
+    const badgeFront = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.50, 2.14),
+      new THREE.MeshBasicMaterial({ map: makeBadgeTexture(), transparent: false })
+    )
+    badgeFront.position.z = 0.042 // DISTÂNCIA DA FRENTE PARA NÃO Z-FIGHTAR
+    group.add(badgeFront)
+
+    // ==================================================
+    // SE VOCÊ QUISER TEXTO / ARTE NA PARTE DE TRÁS DO CARD,
+    // CRIE OUTRO PLANE AQUI, COM position.z NEGATIVO.
+    // EXEMPLO (MANTIDO EM COMENTÁRIO):
+    //
+    // const badgeBack = new THREE.Mesh(
+    //   new THREE.PlaneGeometry(1.50, 2.14),
+    //   new THREE.MeshBasicMaterial({ color: 0x111111 })
+    // )
+    // badgeBack.position.z = -0.042
+    // badgeBack.rotation.y = Math.PI
+    // group.add(badgeBack)
+    //
+    // VOCÊ TAMBÉM PODE TROCAR O MeshBasicMaterial POR UMA TEXTURA.
+    // ==================================================
+
+    // FALLBACK CASO O GLB DA FIVELA NÃO CARREGUE
+    const clipFallback = new THREE.Mesh(
+      new THREE.BoxGeometry(0.30, 0.14, 0.08),
+      new THREE.MeshStandardMaterial({ color: 0x1c1c1c, metalness: 1, roughness: 0.25 })
+    )
+    clipFallback.position.set(0, 1.18, 0.03) // POSIÇÃO DO FALLBACK DA FIVELA
+    group.add(clipFallback)
+
+    // ==================================================
+    // FIVELA PRINCIPAL VIA GLB
+    // AQUI ESTÁ A PARTE QUE PUXA A FIVELA "REAL"
+    // ==================================================
+    const gltfLoader = new GLTFLoader()
+    const buckleRoot = new THREE.Group()
+    buckleRoot.position.set(0, -0.89, -0.01) // POSIÇÃO GERAL DA FIVELA GLB NO CRACHÁ
+    buckleRoot.scale.setScalar(2)        // ESCALA GERAL DA FIVELA GLB
+    buckleRoot.visible = false
+    group.add(buckleRoot)
+
+    gltfLoader.load(
+      'https://assets.vercel.com/image/upload/contentful/image/e5382hct74si/5huRVDzcoDwnbgrKUo1Lzs/53b6dd7d6b4ffcdbd338fa60265949e1/tag.glb',
+      (gltf) => {
+        const model = gltf.scene.clone(true)
+        let foundVisibleMetal = false
+
+        model.traverse((child) => {
+          if (!child.isMesh) return
+          const name = (child.name || '').toLowerCase()
+          const keep = name.includes('clip') || name.includes('clamp') // PEÇAS DA FIVELA QUE SERÃO MANTIDAS
+          child.visible = keep
+          if (keep) {
+            child.material = new THREE.MeshStandardMaterial({
+              color: 0x1c1c1c, // COR DA FIVELA GLB
+              metalness: 1,
+              roughness: 0.25
+            })
+            foundVisibleMetal = true
+          }
+        })
+
+        if (foundVisibleMetal) {
+          clipFallback.visible = false
+          buckleRoot.add(model)
+          buckleRoot.visible = true
+        }
+      },
+      undefined,
+      () => {
+        clipFallback.visible = true
+      }
+    )
+
+    // ==================================================
+    // CONECTOR INFERIOR ENTRE FITA E FIVELA/CARD
+    // AQUI VOCÊ MUDA ESPESSURA / MATERIAL / COR
+    // ==================================================
+    const lowerConnector = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.018, 0.018, 1, 16),
+      new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.25, metalness: 1 })
+    )
+    scene.add(lowerConnector)
+
+    // ARGOLA INFERIOR, PRÓXIMA DO CONECTOR
+    const j3Ring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.07, 0.018, 16, 24),
+      new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.25, metalness: 1 })
+    )
+    j3Ring.rotation.x = Math.PI / 2
+    scene.add(j3Ring)
+
+    let dragged = false
+    let hovered = false
+    let dragOffset = new THREE.Vector3()
+    const tmpVec = new THREE.Vector3()
+    const tmpDir = new THREE.Vector3()
+
+    // ==================================================
+    // PONTO DE ANCORAGEM DA FITA NO CARD
+    // ALTERE ESSE VECTOR3 PARA AJUSTAR ALTURA / DISTÂNCIA / PROFUNDIDADE
+    // DA CONEXÃO DA LANYARD COM A FIVELA NO CRACHÁ
+    // ==================================================
+    const anchorLocal = new THREE.Vector3(0, 1.32, 0.03)
+    const anchorWorld = new THREE.Vector3()
+
+    function resize() {
+      const w = app.clientWidth
+      const h = app.clientHeight
+      camera.aspect = w / h
+      camera.updateProjectionMatrix()
+      renderer.setSize(w, h)
+    }
+    resize()
+    window.addEventListener('resize', resize)
+
+    function setPointer(e) {
+      const rect = app.getBoundingClientRect()
+      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
+    }
+
+    function cardPosition() {
+      const t = card.translation()
+      return new THREE.Vector3(t.x, t.y, t.z)
+    }
+
+    app.addEventListener('pointermove', (e) => {
+      setPointer(e)
+      if (!dragged) {
+        raycaster.setFromCamera(pointer, camera)
+        const hits = raycaster.intersectObject(hitPlane, true)
+        hovered = hits.length > 0
+        app.style.cursor = hovered ? 'grab' : 'default'
+      } else {
+        app.style.cursor = 'grabbing'
+      }
+    })
+
+    app.addEventListener('pointerdown', (e) => {
+      setPointer(e)
+      raycaster.setFromCamera(pointer, camera)
+      const hits = raycaster.intersectObject(hitPlane, true)
+      if (!hits.length) return
+      dragged = true
+      dragOffset.copy(hits[0].point).sub(cardPosition())
+      card.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased, true)
+      fixed.wakeUp()
+      j1.wakeUp()
+      j2.wakeUp()
+      j3.wakeUp()
+      card.wakeUp()
+      app.style.cursor = 'grabbing'
+    })
+
+    window.addEventListener('pointerup', () => {
+      if (!dragged) return
+      dragged = false
+      card.setBodyType(RAPIER.RigidBodyType.Dynamic, true)
+      app.style.cursor = hovered ? 'grab' : 'default'
+    })
+
+    const lerpedJ1 = new THREE.Vector3()
+    const lerpedJ2 = new THREE.Vector3()
+    let initLerp = false
+
+    function animate() {
+      requestAnimationFrame(animate)
+      const delta = Math.min(clock.getDelta(), 1 / 30)
+
+      if (dragged) {
+        tmpVec.set(pointer.x, pointer.y, 0.5).unproject(camera)
+        tmpDir.copy(tmpVec).sub(camera.position).normalize()
+        tmpVec.add(tmpDir.multiplyScalar(camera.position.length()))
+        fixed.wakeUp()
+        j1.wakeUp()
+        j2.wakeUp()
+        j3.wakeUp()
+        card.wakeUp()
+        card.setNextKinematicTranslation({
+          x: tmpVec.x - dragOffset.x,
+          y: tmpVec.y - dragOffset.y,
+          z: tmpVec.z - dragOffset.z
+        })
+      }
+
+      world.step()
+
+      const t1 = v3(j1.translation())
+      const t2 = v3(j2.translation())
+      const t3 = v3(j3.translation())
+      const tf = v3(fixed.translation())
+      const tc = v3(card.translation())
+      const qc = q4(card.rotation())
+
+      if (!initLerp) {
+        lerpedJ1.copy(t1)
+        lerpedJ2.copy(t2)
+        initLerp = true
+      }
+
+      const maxSpeed = 50
+      const minSpeed = 10
+      const d1 = Math.max(0.1, Math.min(1, lerpedJ1.distanceTo(t1)))
+      const d2 = Math.max(0.1, Math.min(1, lerpedJ2.distanceTo(t2)))
+
+      lerpedJ1.lerp(t1, delta * (minSpeed + d1 * (maxSpeed - minSpeed)))
+      lerpedJ2.lerp(t2, delta * (minSpeed + d2 * (maxSpeed - minSpeed)))
+
+      curve.points[0].copy(t3)
+      curve.points[1].copy(lerpedJ2)
+      curve.points[2].copy(lerpedJ1)
+      curve.points[3].copy(tf)
+
+      const ribbonPoints = curve.getPoints(40)
+      updateRibbonGeometry(bandGeometry, ribbonPoints, camera, 0.34) // LARGURA DA LANYARD AO VIVO
+
+      topClasp.position.copy(tf)
+
+      group.position.copy(tc)
+      group.quaternion.copy(qc)
+      anchorWorld.copy(anchorLocal).applyQuaternion(qc).add(tc)
+      j3Ring.position.copy(t3)
+      placeConnector(lowerConnector, t3, anchorWorld)
+
+      const av = card.angvel()
+      const rot = card.rotation()
+      card.setAngvel({ x: av.x, y: av.y - rot.y * 0.25, z: av.z }, true)
+
+      renderer.render(scene, camera)
+    }
+
+    animate()
+  </script>
+</body>
+</html>
