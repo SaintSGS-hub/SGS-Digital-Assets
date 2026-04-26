@@ -35,6 +35,49 @@
       height: 100%;
       display: block;
     }
+
+      /* ============================
+     CURSOR SGS — GITHUB PAGES / IFRAME
+     Cole dentro do <style> existente, antes do </style>
+     ============================ */
+
+  :root {
+    --sgs-cursor-default: url('https://saintsgs-hub.github.io/SGS-Digital-Assets/assets/BlackPixel--cursor--SweezyCursors..svg') 16 16, auto;
+    --sgs-cursor-hover: url('https://saintsgs-hub.github.io/SGS-Digital-Assets/assets/BlackPixel--pointer--SweezyCursors..svg') 16 16, pointer;
+    --sgs-cursor-grab: url('https://saintsgs-hub.github.io/SGS-Digital-Assets/assets/BlackPixel--grab--SweezyCursors..svg') 16 16, grab;
+    --sgs-cursor-grabbing: url('https://saintsgs-hub.github.io/SGS-Digital-Assets/assets/BlackPixel--grabbing--SweezyCursors..svg') 16 16, grabbing;
+  }
+
+  html,
+  body,
+  #badge-app,
+  #badge-canvas,
+  #badge-app * {
+    cursor: var(--sgs-cursor-default) !important;
+  }
+
+  a,
+  a:hover,
+  button,
+  button:hover,
+  [role="button"],
+  [role="button"]:hover {
+    cursor: var(--sgs-cursor-hover) !important;
+  }
+
+  html.sgs-cursor-grab,
+  html.sgs-cursor-grab body,
+  html.sgs-cursor-grab #badge-app,
+  html.sgs-cursor-grab #badge-canvas {
+    cursor: var(--sgs-cursor-grab) !important;
+  }
+
+  html.sgs-cursor-grabbing,
+  html.sgs-cursor-grabbing body,
+  html.sgs-cursor-grabbing #badge-app,
+  html.sgs-cursor-grabbing #badge-canvas {
+    cursor: var(--sgs-cursor-grabbing) !important;
+  }
   </style>
 </head>
 <body>
@@ -57,6 +100,18 @@
 
     const app = document.getElementById('badge-app')
     const canvas = document.getElementById('badge-canvas')
+
+    function setSgsCursor(type) {
+  document.documentElement.classList.remove('sgs-cursor-grab', 'sgs-cursor-grabbing')
+
+  if (type === 'grab') {
+    document.documentElement.classList.add('sgs-cursor-grab')
+  }
+
+  if (type === 'grabbing') {
+    document.documentElement.classList.add('sgs-cursor-grabbing')
+  }
+}
 
     // ==================================================
     // TEXTO PRINCIPAL DO CARD ID
@@ -714,9 +769,9 @@ ctx.restore()
         raycaster.setFromCamera(pointer, camera)
         const hits = raycaster.intersectObject(hitPlane, true)
         hovered = hits.length > 0
-        app.style.cursor = hovered ? 'grab' : 'default'
+        setSgsCursor(hovered ? 'grab' : 'default')
       } else {
-        app.style.cursor = 'grabbing'
+        setSgsCursor('grabbing')
       }
     })
 
@@ -733,14 +788,14 @@ ctx.restore()
       j2.wakeUp()
       j3.wakeUp()
       card.wakeUp()
-      app.style.cursor = 'grabbing'
+      setSgsCursor('grabbing')
     })
 
     window.addEventListener('pointerup', () => {
       if (!dragged) return
       dragged = false
       card.setBodyType(RAPIER.RigidBodyType.Dynamic, true)
-      app.style.cursor = hovered ? 'grab' : 'default'
+      setSgsCursor(hovered ? 'grab' : 'default')
     })
 
     const lerpedJ1 = new THREE.Vector3()
