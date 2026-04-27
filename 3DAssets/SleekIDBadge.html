@@ -21,7 +21,7 @@
     #badge-app {
       position: absolute;
       width: 100%;
-      height: 1080px; /* ALTURA TOTAL DO COMPONENTE NA PÁGINA */
+      height: 1080px; /* ALTURA TOTAL DO COMPONENTE NA PÃGINA */
       max-width: 100%;
       overflow: hidden;
       background: transparent;
@@ -36,45 +36,98 @@
       display: block;
     }
 
-/* CURSOR SGS — GITHUB PAGES / IFRAME Cole dentro do <style> existente, antes do style */
+    /* ============================
+       SGS GLOBAL CURSOR
+       Mesma configuracao do index.html principal.
+       ============================ */
 
-  :root {
-    --sgs-cursor-default: url('https://saintsgs-hub.github.io/SGS-Digital-Assets/assets/BlackPixel--cursor--SweezyCursors..svg') 16 16, auto;
-    --sgs-cursor-hover: url('https://saintsgs-hub.github.io/SGS-Digital-Assets/assets/BlackPixel--pointer--SweezyCursors..svg') 16 16, pointer;
-    --sgs-cursor-grab: url('https://saintsgs-hub.github.io/SGS-Digital-Assets/assets/BlackPixel--grab--SweezyCursors..svg') 16 16, grab;
-    --sgs-cursor-grabbing: url('https://saintsgs-hub.github.io/SGS-Digital-Assets/assets/BlackPixel--grabbing--SweezyCursors..svg') 16 16, grabbing;
-  }
+    html,
+    body,
+    html *,
+    body *,
+    html *::before,
+    html *::after,
+    body *::before,
+    body *::after {
+      cursor: url("https://saintsgs-hub.github.io/SGS-Digital-Assets/assets/cursors/sgs-cursor.svg") 2 2, auto !important;
+    }
 
-  html,
-  body,
-  #badge-app,
-  #badge-canvas,
-  #badge-app * {
-    cursor: var(--sgs-cursor-default) !important;
-  }
+    a,
+    a:hover,
+    button,
+    button:hover,
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    label,
+    summary,
+    select,
+    [role="button"],
+    [role="button"]:hover,
+    [onclick],
+    [onclick]:hover {
+      cursor: url("https://saintsgs-hub.github.io/SGS-Digital-Assets/assets/cursors/sgs-pointer.svg") 2 2, pointer !important;
+    }
 
-  a,
-  a:hover,
-  button,
-  button:hover,
-  [role="button"],
-  [role="button"]:hover {
-    cursor: var(--sgs-cursor-hover) !important;
-  }
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    input[type="tel"],
+    input[type="url"],
+    input[type="number"],
+    textarea,
+    [contenteditable="true"],
+    [contenteditable=""] {
+      cursor: text !important;
+    }
 
-  html.sgs-cursor-grab,
-  html.sgs-cursor-grab body,
-  html.sgs-cursor-grab #badge-app,
-  html.sgs-cursor-grab #badge-canvas {
-    cursor: var(--sgs-cursor-grab) !important;
-  }
+    html.sgs-cursor-grab,
+    html.sgs-cursor-grab body,
+    html.sgs-cursor-grab body *,
+    html.sgs-cursor-grab body *::before,
+    html.sgs-cursor-grab body *::after,
+    html.sgs-cursor-grab #badge-app,
+    html.sgs-cursor-grab #badge-canvas,
+    .sgs-cursor-grab,
+    .sgs-cursor-grab *,
+    [data-cursor="grab"],
+    [data-cursor="grab"] *,
+    [draggable="true"],
+    [draggable="true"] * {
+      cursor: url("https://saintsgs-hub.github.io/SGS-Digital-Assets/assets/cursors/sgs-grab.svg") 2 2, grab !important;
+    }
 
-  html.sgs-cursor-grabbing,
-  html.sgs-cursor-grabbing body,
-  html.sgs-cursor-grabbing #badge-app,
-  html.sgs-cursor-grabbing #badge-canvas {
-    cursor: var(--sgs-cursor-grabbing) !important;
-  }
+    html.sgs-cursor-grabbing,
+    html.sgs-cursor-grabbing body,
+    html.sgs-cursor-grabbing body *,
+    html.sgs-cursor-grabbing body *::before,
+    html.sgs-cursor-grabbing body *::after,
+    html.sgs-cursor-grabbing #badge-app,
+    html.sgs-cursor-grabbing #badge-canvas,
+    html.sgs-is-grabbing,
+    html.sgs-is-grabbing body,
+    html.sgs-is-grabbing body *,
+    html.sgs-is-grabbing body *::before,
+    html.sgs-is-grabbing body *::after,
+    .sgs-cursor-grab:active,
+    .sgs-cursor-grab:active *,
+    [data-cursor="grab"]:active,
+    [data-cursor="grab"]:active *,
+    [draggable="true"]:active,
+    [draggable="true"]:active *,
+    #badge-app:active,
+    #badge-canvas:active {
+      cursor: url("https://saintsgs-hub.github.io/SGS-Digital-Assets/assets/cursors/sgs-grabbing.svg") 2 2, grabbing !important;
+    }
+
+    button:disabled,
+    input:disabled,
+    select:disabled,
+    textarea:disabled,
+    [aria-disabled="true"] {
+      cursor: not-allowed !important;
+    }
   </style>
 </head>
 <body>
@@ -112,14 +165,14 @@
 
     // ==================================================
     // TEXTO PRINCIPAL DO CARD ID
-    // ALTERE AQUI O QUE FICA ESCRITO NO CRACHÁ
+    // ALTERE AQUI O QUE FICA ESCRITO NO CRACHÃ
     // ==================================================
     const NAME = 'SGS Digital'                    // NOME GRANDE
-    const ROLE = 'Secret Association of Premium Websites'  // CARGO / SUBTÍTULO
+    const ROLE = 'Secret Association of Premium Websites'  // CARGO / SUBTÃTULO
     const EMAIL = 'equipe.sgsdigital@zohomail.com'         // BLOCO EMAIL
     const PHONE = '+55 (62) 99115-9228'       // BLOCO PHONE
     const TAGLINE = 'Important Member of the Secret Association of Premium Websites' // BLOCO NOTES
-    const INITIALS = 'SGS'                   // INICIAIS NO CÍRCULO
+    const INITIALS = 'SGS'                   // INICIAIS NO CÃRCULO
 
     const BADGE_IMAGE_URLS = [
       'https://saintsgs-hub.github.io/SGS-Digital-Assets/images/sleekidbadge.png',
@@ -200,7 +253,7 @@
 
       // ==================================================
       // CORES BASE DO CARD ID (FRENTE)
-      // ALTERE AQUI O FUNDO / PALETA PRINCIPAL DO CRACHÁ
+      // ALTERE AQUI O FUNDO / PALETA PRINCIPAL DO CRACHÃ
       // ==================================================
       const g = ctx.createLinearGradient(0, 0, 0, c.height)
       g.addColorStop(0, '#1c1c1c')
@@ -208,7 +261,7 @@
       ctx.fillStyle = g
       ctx.fillRect(0, 0, c.width, c.height)
 
-      // BRILHO / REFLEXO DECORATIVO DA FRENTE DO CRACHÁ
+      // BRILHO / REFLEXO DECORATIVO DA FRENTE DO CRACHÃ
       ctx.fillStyle = 'rgba(255,255,255,0.06)'
       ctx.beginPath()
       ctx.ellipse(c.width * 0.23, c.height * 0.11, 180, 110, -0.45, 0, Math.PI * 2)
@@ -224,14 +277,14 @@
       ctx.textBaseline = 'alphabetic'
       ctx.fillStyle = 'rgba(255,255,255,1.6)' // COR DO TEXTO PEQUENO DO TOPO
       ctx.font = '700 32px Inter, Arial, sans-serif' // FONTE/TAMANHO DO TOPO
-      ctx.fillText('SGS SHIP', 70, 98) // POSIÇÃO DO TEXTO PEQUENO DO TOPO
+      ctx.fillText('SGS SHIP', 70, 98) // POSIÃ‡ÃƒO DO TEXTO PEQUENO DO TOPO
 
-      // CÍRCULO DAS INICIAIS
+      // CÃRCULO DAS INICIAIS
       ctx.beginPath()
-      ctx.arc(c.width / 5, 350, 120, 0, Math.PI * 2) // POSIÇÃO E TAMANHO DO CÍRCULO
-      ctx.fillStyle = 'rgba(16,16,16,0)' // COR DO CÍRCULO DAS INICIAIS 1.2
+      ctx.arc(c.width / 5, 350, 120, 0, Math.PI * 2) // POSIÃ‡ÃƒO E TAMANHO DO CÃRCULO
+      ctx.fillStyle = 'rgba(16,16,16,0)' // COR DO CÃRCULO DAS INICIAIS 1.2
       ctx.fill()
-      ctx.strokeStyle = 'rgba(230,147,14,0)' // BORDA DO CÍRCULO 1.2
+      ctx.strokeStyle = 'rgba(230,147,14,0)' // BORDA DO CÃRCULO 1.2
       ctx.lineWidth = 8
       ctx.stroke()
 
@@ -240,32 +293,32 @@
       ctx.font = '700 96px Inter, Arial, sans-serif' // FONTE/TAMANHO DAS INICIAIS
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText(INITIALS, c.width / 5, 360) // POSIÇÃO DAS INICIAIS
+      ctx.fillText(INITIALS, c.width / 5, 360) // POSIÃ‡ÃƒO DAS INICIAIS
 
       // NOME GRANDE
       ctx.fillStyle = 'rgba(255,255,255,0)' // COR DO NOME GRANDE 0.62
       ctx.font = '700 90px Inter, Arial, sans-serif' // FONTE/TAMANHO DO NOME
-      wrapCenter(ctx, NAME, c.width / 4, 620, 920, 94) // POSIÇÃO / LARGURA / ESPAÇAMENTO DO NOME
+      wrapCenter(ctx, NAME, c.width / 4, 620, 920, 94) // POSIÃ‡ÃƒO / LARGURA / ESPAÃ‡AMENTO DO NOME
 
-      // CARGO / SUBTÍTULO
-      ctx.fillStyle = 'rgba(255,255,255,1.90)' // COR DO SUBTÍTULO 0.62
-      ctx.font = '500 28px Inter, Arial, sans-serif' // FONTE/TAMANHO DO SUBTÍTULO
-      ctx.fillText(ROLE, c.width / 4, 760) // POSIÇÃO DO SUBTÍTULO
+      // CARGO / SUBTÃTULO
+      ctx.fillStyle = 'rgba(255,255,255,1.90)' // COR DO SUBTÃTULO 0.62
+      ctx.font = '500 28px Inter, Arial, sans-serif' // FONTE/TAMANHO DO SUBTÃTULO
+      ctx.fillText(ROLE, c.width / 4, 760) // POSIÃ‡ÃƒO DO SUBTÃTULO
 
-      // BLOCOS DE INFORMAÇÃO
+      // BLOCOS DE INFORMAÃ‡ÃƒO
       drawInfo(ctx, 40, 860, 1060, 120, 'EMAIL', EMAIL)
       drawInfo(ctx, 40, 1005, 1060, 120, 'PHONE', PHONE)
       drawInfo(ctx, 40, 1150, 1060, 210, 'NOTES', TAGLINE)
 
-      // TEXTO RODAPÉ
-      ctx.fillStyle = 'rgba(255,255,255,1.8)' // COR DO TEXTO RODAPÉ 0.7
+      // TEXTO RODAPÃ‰
+      ctx.fillStyle = 'rgba(255,255,255,1.8)' // COR DO TEXTO RODAPÃ‰ 0.7
       ctx.font = '700 30px Inter, Arial, sans-serif'
       ctx.textAlign = 'left'
-      ctx.fillText('SGS IDENTIFICATION PASS', 70, 1602) // TEXTO RODAPÉ / POSIÇÃO
+      ctx.fillText('SGS IDENTIFICATION PASS', 70, 1602) // TEXTO RODAPÃ‰ / POSIÃ‡ÃƒO
 
-      // CÓDIGO DE BARRAS DECORATIVO
+      // CÃ“DIGO DE BARRAS DECORATIVO
       for (let i = 0; i < 44; i++) {
-        const x = 860 + i * 5 // POSIÇÃO HORIZONTAL DO CÓDIGO DE BARRAS
+        const x = 860 + i * 5 // POSIÃ‡ÃƒO HORIZONTAL DO CÃ“DIGO DE BARRAS
         const h = 36 + ((i % 4) * 7) // ALTURA DAS BARRAS
         ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,1.85)' : 'rgba(255,255,255,0.78)' // COR DAS BARRAS 0.75 0.18
         ctx.fillRect(x, 1545, 3, h)
@@ -278,7 +331,7 @@
 
     function makeBandTexture() {
       const c = document.createElement('canvas')
-      c.width = 1280  // RESOLUÇÃO DA TEXTURA DA LANYARD
+      c.width = 1280  // RESOLUÃ‡ÃƒO DA TEXTURA DA LANYARD
       c.height = 256  // ALTURA DA TEXTURA DA LANYARD
       const ctx = c.getContext('2d')
 
@@ -334,7 +387,7 @@ textLayer.width = c.width
 textLayer.height = c.height
 const tctx = textLayer.getContext('2d')
 
-// 1) DESENHA O TEXTO COMO MÁSCARA
+// 1) DESENHA O TEXTO COMO MÃSCARA
 for (let x = 200; x < c.width - 200; x += 600) {
   tctx.save()
   tctx.translate(x, c.height / 2)
@@ -345,9 +398,9 @@ for (let x = 200; x < c.width - 200; x += 600) {
   tctx.textAlign = 'center'
   tctx.textBaseline = 'middle'
 
-  // A cor aqui não importa muito, porque ela vira máscara
+  // A cor aqui nÃ£o importa muito, porque ela vira mÃ¡scara
   tctx.fillStyle = '#ffffff'
-  tctx.fillText('◆ , 6 ,   ]868.`-', 0, 0)
+  tctx.fillText('â—† , 6 ,   ]868.`-', 0, 0)
 
   tctx.restore()
 }
@@ -356,8 +409,8 @@ for (let x = 200; x < c.width - 200; x += 600) {
 tctx.globalCompositeOperation = 'source-in'
 
 // IMPORTANTE:
-// usar a própria textura da lanyard, mas levemente deslocada,
-// para o texto não sumir no fundo
+// usar a prÃ³pria textura da lanyard, mas levemente deslocada,
+// para o texto nÃ£o sumir no fundo
 tctx.drawImage(c, 350, 0)
 
 // 3) DESENHA O TEXTO TEXTURIZADO POR CIMA DA FITA
@@ -366,7 +419,7 @@ ctx.globalAlpha = 0.1
 ctx.drawImage(textLayer, 0, 0)
 ctx.restore()
 
-// 4) CONTORNO LEVE PARA O TEXTO NÃO SUMIR
+// 4) CONTORNO LEVE PARA O TEXTO NÃƒO SUMIR
 ctx.save()
 ctx.globalAlpha = 0.22
 ctx.strokeStyle = 'rgba(255,255,255,0.70)'
@@ -379,7 +432,7 @@ for (let x = 200; x < c.width - 200; x += 600) {
   ctx.save()
   ctx.translate(x, c.height / 2)
   ctx.rotate(0)
-  ctx.strokeText('◆ , 6 ,   ]868.`-', 0, 0)
+  ctx.strokeText('â—† , 6 ,   ]868.`-', 0, 0)
   ctx.restore()
 }
 
@@ -389,7 +442,7 @@ ctx.restore()
       texture.colorSpace = THREE.SRGBColorSpace
       texture.wrapS = THREE.RepeatWrapping
       texture.wrapT = THREE.RepeatWrapping
-      texture.repeat.set(-2, 1) // REPETIÇÃO DA TEXTURA AO LONGO DA LANYARD
+      texture.repeat.set(-2, 1) // REPETIÃ‡ÃƒO DA TEXTURA AO LONGO DA LANYARD
       texture.anisotropy = 1
       texture.needsUpdate = true
       return texture
@@ -442,7 +495,7 @@ ctx.restore()
     function drawInfo(ctx, x, y, w, h, label, value) {
       // ==================================================
       // ESTILO DOS BLOCOS EMAIL / PHONE / NOTES
-      // ALTERE AQUI CORES, FONTE E ESPAÇAMENTO DESSES BLOCOS
+      // ALTERE AQUI CORES, FONTE E ESPAÃ‡AMENTO DESSES BLOCOS
       // ==================================================
       ctx.fillStyle = 'rgba(255,255,255,0.03)' // FUNDO DO BLOCO
       roundRect(ctx, x, y, w, h, 18)
@@ -508,7 +561,7 @@ ctx.restore()
 
     function placeConnector(mesh, start, end) {
       // ==================================================
-      // ESTE É O CONECTOR ENTRE A LANYARD E O CARD
+      // ESTE Ã‰ O CONECTOR ENTRE A LANYARD E O CARD
       // MEXA NO lowerConnector MAIS ABAIXO PARA VISUAL/ESPESSURA
       // ==================================================
       const dir = end.clone().sub(start)
@@ -529,14 +582,14 @@ ctx.restore()
 
     function segmentDesc(x, y, z) {
       return RAPIER.RigidBodyDesc.dynamic()
-        .setTranslation(x, y, z) // POSIÇÃO INICIAL DOS SEGMENTOS DA LANYARD
+        .setTranslation(x, y, z) // POSIÃ‡ÃƒO INICIAL DOS SEGMENTOS DA LANYARD
         .setLinearDamping(2)     // AMORTECIMENTO DE MOVIMENTO
-        .setAngularDamping(2)    // AMORTECIMENTO DE ROTAÇÃO
+        .setAngularDamping(2)    // AMORTECIMENTO DE ROTAÃ‡ÃƒO
         .setCanSleep(true)
     }
 
     // ==================================================
-    // PONTOS FÍSICOS DA LANYARD
+    // PONTOS FÃSICOS DA LANYARD
     // MEXER NESSES X/Y/Z ALTERA A QUEDA / CURVA INICIAL DA FITA
     // ==================================================
     const fixed = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 4, 0)) // PONTO FIXO NO TOPO
@@ -548,11 +601,11 @@ ctx.restore()
     world.createCollider(RAPIER.ColliderDesc.ball(0.1), j1)
     world.createCollider(RAPIER.ColliderDesc.ball(0.1), j2)
     world.createCollider(RAPIER.ColliderDesc.ball(0.1), j3)
-    world.createCollider(RAPIER.ColliderDesc.cuboid(0.8, 1.125, 0.04), card) // ÁREA FÍSICA DO CRACHÁ
+    world.createCollider(RAPIER.ColliderDesc.cuboid(0.8, 1.125, 0.04), card) // ÃREA FÃSICA DO CRACHÃ
 
     // ==================================================
     // TAMANHO DOS TRECHOS DA LANYARD
-    // O "1" AQUI É O COMPRIMENTO DE CADA TRECHO DA CORDA/FITA
+    // O "1" AQUI Ã‰ O COMPRIMENTO DE CADA TRECHO DA CORDA/FITA
     // ==================================================
     world.createImpulseJoint(RAPIER.JointData.rope(1, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }), fixed, j1, true)
     world.createImpulseJoint(RAPIER.JointData.rope(1, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }), j1, j2, true)
@@ -560,7 +613,7 @@ ctx.restore()
 
     // ==================================================
     // PONTO ONDE A LANYARD CONECTA NO CARD
-    // ALTERE O Y (1.48) PARA SUBIR/DESCER A CONEXÃO NO CRACHÁ
+    // ALTERE O Y (1.48) PARA SUBIR/DESCER A CONEXÃƒO NO CRACHÃ
     // ==================================================
     world.createImpulseJoint(RAPIER.JointData.spherical({ x: 0, y: 0, z: 0 }, { x: 0, y: 1.48, z: 0 }), j3, card, true)
 
@@ -594,7 +647,7 @@ ctx.restore()
 
     // ==================================================
     // ARGOLA SUPERIOR DO TOPO
-    // AQUI VOCÊ MUDA TAMANHO / ESPESSURA / MATERIAL / COR DA ARGOLA DO TOPO
+    // AQUI VOCÃŠ MUDA TAMANHO / ESPESSURA / MATERIAL / COR DA ARGOLA DO TOPO
     // ==================================================
     const topClasp = new THREE.Mesh(
       new THREE.TorusGeometry(0.12, 0.02, 18, 36),
@@ -607,19 +660,19 @@ ctx.restore()
     scene.add(group)
 
     const hitPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(1.92, 2.66), // ÁREA CLICÁVEL PARA ARRASTAR O CRACHÁ
+      new THREE.PlaneGeometry(1.92, 2.66), // ÃREA CLICÃVEL PARA ARRASTAR O CRACHÃ
       new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.001, side: THREE.DoubleSide })
     )
     group.add(hitPlane)
 
     // ==================================================
     // COR / MATERIAL / CORPO DO CARD ID
-    // ISSO CONTROLA O VOLUME 3D DO CRACHÁ E SUA PARTE TRASEIRA BASE
+    // ISSO CONTROLA O VOLUME 3D DO CRACHÃ E SUA PARTE TRASEIRA BASE
     // ==================================================
     const badgeBody = new THREE.Mesh(
       new RoundedBoxGeometry(1.6, 2.25, 0.08, 6, 0.13), // LARGURA / ALTURA / ESPESSURA / ARREDONDAMENTO
       new THREE.MeshPhysicalMaterial({
-        color: 0x0a0a0a,       // COR BASE DO CORPO/TRASEIRA DO CRACHÁ
+        color: 0x0a0a0a,       // COR BASE DO CORPO/TRASEIRA DO CRACHÃ
         roughness: 0.42,
         metalness: 0.08,
         clearcoat: 0.24,
@@ -630,19 +683,19 @@ ctx.restore()
 
     // ==================================================
     // FRENTE DO CARD ID
-    // A TEXTURA GERADA EM makeBadgeTexture() É A FRENTE VISÍVEL
+    // A TEXTURA GERADA EM makeBadgeTexture() Ã‰ A FRENTE VISÃVEL
     // ==================================================
     const badgeFront = new THREE.Mesh(
       new THREE.PlaneGeometry(1.50, 2.14),
       new THREE.MeshBasicMaterial({ map: makeBadgeTexture(), transparent: false })
     )
-    badgeFront.position.z = 0.042 // DISTÂNCIA DA FRENTE PARA NÃO Z-FIGHTAR
+    badgeFront.position.z = 0.042 // DISTÃ‚NCIA DA FRENTE PARA NÃƒO Z-FIGHTAR
     group.add(badgeFront)
 
     // ==================================================
-    // SE VOCÊ QUISER TEXTO / ARTE NA PARTE DE TRÁS DO CARD,
+    // SE VOCÃŠ QUISER TEXTO / ARTE NA PARTE DE TRÃS DO CARD,
     // CRIE OUTRO PLANE AQUI, COM position.z NEGATIVO.
-    // EXEMPLO (MANTIDO EM COMENTÁRIO):
+    // EXEMPLO (MANTIDO EM COMENTÃRIO):
     //
     // const badgeBack = new THREE.Mesh(
     //   new THREE.PlaneGeometry(1.50, 2.14),
@@ -652,24 +705,24 @@ ctx.restore()
     // badgeBack.rotation.y = Math.PI
     // group.add(badgeBack)
     //
-    // VOCÊ TAMBÉM PODE TROCAR O MeshBasicMaterial POR UMA TEXTURA.
+    // VOCÃŠ TAMBÃ‰M PODE TROCAR O MeshBasicMaterial POR UMA TEXTURA.
     // ==================================================
 
-    // FALLBACK CASO O GLB DA FIVELA NÃO CARREGUE
+    // FALLBACK CASO O GLB DA FIVELA NÃƒO CARREGUE
     const clipFallback = new THREE.Mesh(
       new THREE.BoxGeometry(0.30, 0.14, 0.08),
       new THREE.MeshStandardMaterial({ color: 0x1c1c1c, metalness: 1, roughness: 0.25 })
     )
-    clipFallback.position.set(0, 1.18, 0.03) // POSIÇÃO DO FALLBACK DA FIVELA
+    clipFallback.position.set(0, 1.18, 0.03) // POSIÃ‡ÃƒO DO FALLBACK DA FIVELA
     group.add(clipFallback)
 
     // ==================================================
     // FIVELA PRINCIPAL VIA GLB
-    // AQUI ESTÁ A PARTE QUE PUXA A FIVELA "REAL"
+    // AQUI ESTÃ A PARTE QUE PUXA A FIVELA "REAL"
     // ==================================================
     const gltfLoader = new GLTFLoader()
     const buckleRoot = new THREE.Group()
-    buckleRoot.position.set(0, -0.89, -0.01) // POSIÇÃO GERAL DA FIVELA GLB NO CRACHÁ
+    buckleRoot.position.set(0, -0.89, -0.01) // POSIÃ‡ÃƒO GERAL DA FIVELA GLB NO CRACHÃ
     buckleRoot.scale.setScalar(2)        // ESCALA GERAL DA FIVELA GLB
     buckleRoot.visible = false
     group.add(buckleRoot)
@@ -683,7 +736,7 @@ ctx.restore()
         model.traverse((child) => {
           if (!child.isMesh) return
           const name = (child.name || '').toLowerCase()
-          const keep = name.includes('clip') || name.includes('clamp') // PEÇAS DA FIVELA QUE SERÃO MANTIDAS
+          const keep = name.includes('clip') || name.includes('clamp') // PEÃ‡AS DA FIVELA QUE SERÃƒO MANTIDAS
           child.visible = keep
           if (keep) {
             child.material = new THREE.MeshStandardMaterial({
@@ -709,7 +762,7 @@ ctx.restore()
 
     // ==================================================
     // CONECTOR INFERIOR ENTRE FITA E FIVELA/CARD
-    // AQUI VOCÊ MUDA ESPESSURA / MATERIAL / COR
+    // AQUI VOCÃŠ MUDA ESPESSURA / MATERIAL / COR
     // ==================================================
     const lowerConnector = new THREE.Mesh(
       new THREE.CylinderGeometry(0.018, 0.018, 1, 16),
@@ -717,7 +770,7 @@ ctx.restore()
     )
     scene.add(lowerConnector)
 
-    // ARGOLA INFERIOR, PRÓXIMA DO CONECTOR
+    // ARGOLA INFERIOR, PRÃ“XIMA DO CONECTOR
     const j3Ring = new THREE.Mesh(
       new THREE.TorusGeometry(0.07, 0.018, 16, 24),
       new THREE.MeshStandardMaterial({ color: 0x1c1c1c, roughness: 0.25, metalness: 1 })
@@ -733,8 +786,8 @@ ctx.restore()
 
     // ==================================================
     // PONTO DE ANCORAGEM DA FITA NO CARD
-    // ALTERE ESSE VECTOR3 PARA AJUSTAR ALTURA / DISTÂNCIA / PROFUNDIDADE
-    // DA CONEXÃO DA LANYARD COM A FIVELA NO CRACHÁ
+    // ALTERE ESSE VECTOR3 PARA AJUSTAR ALTURA / DISTÃ‚NCIA / PROFUNDIDADE
+    // DA CONEXÃƒO DA LANYARD COM A FIVELA NO CRACHÃ
     // ==================================================
     const anchorLocal = new THREE.Vector3(0, 1.32, 0.03)
     const anchorWorld = new THREE.Vector3()
