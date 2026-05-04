@@ -715,6 +715,7 @@ ctx.restore()
     function enableFallbackDrag(label) {
       if (!isMobileMotionDevice) return
       mobileMotion.fallbackEnabled = true
+      mobileMotion.enabled = true
       if (label) {
         pulseMotionButton(label)
       } else {
@@ -843,6 +844,11 @@ ctx.restore()
         event.preventDefault()
         event.stopPropagation()
         requestMobileMotion()
+        window.setTimeout(() => {
+          if (!mobileMotion.hasSample && !mobileMotion.hasMotionSample) {
+            enableFallbackDrag('Arraste para mover')
+          }
+        }, 1200)
       })
     }
 
@@ -855,6 +861,15 @@ ctx.restore()
       }, { passive: true })
 
       app.addEventListener('pointermove', function (event) {
+        if (!mobileMotion.fallbackDrag) return
+        const dx = ((event.clientX || 0) - mobileMotion.fallbackStartX) / 90
+        const dy = ((event.clientY || 0) - mobileMotion.fallbackStartY) / 120
+        mobileMotion.enabled = true
+        mobileMotion.targetX = normalizeMotion(clampMotion(dx, -1, 1))
+        mobileMotion.targetY = normalizeMotion(clampMotion(dy, -1, 1))
+      }, { passive: true })
+
+      window.addEventListener('pointermove', function (event) {
         if (!mobileMotion.fallbackDrag) return
         const dx = ((event.clientX || 0) - mobileMotion.fallbackStartX) / 90
         const dy = ((event.clientY || 0) - mobileMotion.fallbackStartY) / 120
