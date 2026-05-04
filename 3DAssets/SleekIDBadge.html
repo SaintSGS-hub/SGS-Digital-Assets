@@ -684,6 +684,10 @@ ctx.restore()
       currentY: 0,
       lastOrientationAt: 0,
       permissionRequested: false,
+      fallbackEnabled: false,
+      fallbackDrag: false,
+      fallbackStartX: 0,
+      fallbackStartY: 0,
       lastWake: 0
     }
 
@@ -698,6 +702,24 @@ ctx.restore()
     function showMotionButton(show) {
       if (!motionButton || !isMobileMotionDevice) return
       motionButton.classList.toggle('is-visible', !!show)
+    }
+
+    function pulseMotionButton(label) {
+      if (!motionButton || !isMobileMotionDevice) return
+      motionButton.textContent = label
+      showMotionButton(true)
+      window.clearTimeout(motionButton._sgsHideTimer)
+      motionButton._sgsHideTimer = window.setTimeout(() => showMotionButton(false), 1400)
+    }
+
+    function enableFallbackDrag(label) {
+      if (!isMobileMotionDevice) return
+      mobileMotion.fallbackEnabled = true
+      if (label) {
+        pulseMotionButton(label)
+      } else {
+        showMotionButton(true)
+      }
     }
 
     function handleDeviceOrientation(event) {
@@ -746,6 +768,11 @@ ctx.restore()
       mobileMotion.listening = true
       mobileMotion.enabled = true
       showMotionButton(false)
+      window.setTimeout(() => {
+        if (!mobileMotion.hasSample && !mobileMotion.hasMotionSample) {
+          pulseMotionButton('Incline o celular')
+        }
+      }, 1400)
     }
 
     async function requestMobileMotion() {
@@ -754,16 +781,32 @@ ctx.restore()
       showMotionButton(false)
 
       try {
-        if (window.DeviceOrientationEvent && typeof window.DeviceOrientationEvent.requestPermission === 'function') {
-          const orientationState = await window.DeviceOrientationEvent.requestPermission()
-          let motionState = orientationState
-          if (window.DeviceMotionEvent && typeof window.DeviceMotionEvent.requestPermission === 'function') {
-            motionState = await window.DeviceMotionEvent.requestPermission()
+        const needsOrientationPermission = window.DeviceOrientationEvent && typeof window.DeviceOrientationEvent.requestPermission === 'function'
+        const needsMotionPermission = window.DeviceMotionEvent && typeof window.DeviceMotionEvent.requestPermission === 'function'
+
+        if (needsOrientationPermission || needsMotionPermission) {
+          let orientationState = 'unavailable'
+          let motionState = 'unavailable'
+
+          if (needsOrientationPermission) {
+            try {
+              orientationState = await window.DeviceOrientationEvent.requestPermission()
+            } catch (error) {
+              orientationState = 'denied'
+            }
           }
-          if (orientationState === 'granted' || motionState === 'granted') startMobileMotion()
-          else {
-            motionButton.textContent = 'Movimento bloqueado'
-            showMotionButton(true)
+
+          if (needsMotionPermission) {
+            try {
+              motionState = await window.DeviceMotionEvent.requestPermission()
+            } catch (error) {
+              motionState = 'denied'
+            }
+          }
+
+          startMobileMotion()
+          if (orientationState !== 'granted' && motionState !== 'granted') {
+            enableFallbackDrag('Arraste para mover')
           }
           return
         }
@@ -771,7 +814,8 @@ ctx.restore()
         startMobileMotion()
       } catch (error) {
         console.warn('Motion permission was not granted.', error)
-        showMotionButton(true)
+        startMobileMotion()
+        enableFallbackDrag('Arraste para mover')
       }
     }
 
@@ -782,10 +826,16 @@ ctx.restore()
       } else {
         startMobileMotion()
       }
+    } else if (isMobileMotionDevice) {
+      enableFallbackDrag('Arraste para mover')
     }
 
     if (motionButton) {
       motionButton.addEventListener('pointerdown', function (event) {
+        if (!mobileMotion.fallbackEnabled && mobileMotion.enabled) return
+        mobileMotion.fallbackDrag = true
+        mobileMotion.fallbackStartX = event.clientX || 0
+        mobileMotion.fallbackStartY = event.clientY || 0
         event.stopPropagation()
       })
 
@@ -794,6 +844,28 @@ ctx.restore()
         event.stopPropagation()
         requestMobileMotion()
       })
+    }
+
+    if (isMobileMotionDevice) {
+      app.addEventListener('pointerdown', function (event) {
+        if (!mobileMotion.fallbackEnabled && mobileMotion.enabled) return
+        mobileMotion.fallbackDrag = true
+        mobileMotion.fallbackStartX = event.clientX || 0
+        mobileMotion.fallbackStartY = event.clientY || 0
+      }, { passive: true })
+
+      app.addEventListener('pointermove', function (event) {
+        if (!mobileMotion.fallbackDrag) return
+        const dx = ((event.clientX || 0) - mobileMotion.fallbackStartX) / 90
+        const dy = ((event.clientY || 0) - mobileMotion.fallbackStartY) / 120
+        mobileMotion.enabled = true
+        mobileMotion.targetX = normalizeMotion(clampMotion(dx, -1, 1))
+        mobileMotion.targetY = normalizeMotion(clampMotion(dy, -1, 1))
+      }, { passive: true })
+
+      window.addEventListener('pointerup', function () {
+        mobileMotion.fallbackDrag = false
+      }, { passive: true })
     }
 
     const curve = new THREE.CatmullRomCurve3([
