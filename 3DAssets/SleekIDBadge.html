@@ -128,11 +128,57 @@
     [aria-disabled="true"] {
       cursor: not-allowed !important;
     }
+
+    .motion-permission {
+      position: fixed;
+      left: 50%;
+      bottom: max(18px, env(safe-area-inset-bottom, 0px));
+      z-index: 20;
+      transform: translate3d(-50%, 10px, 0);
+      border: 1px solid rgba(255, 177, 23, 0.34);
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(5, 5, 5, 0.62);
+      color: rgba(255, 248, 230, 0.88);
+      font: 700 11px/1 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+    }
+
+    .motion-permission.is-visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translate3d(-50%, 0, 0);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .motion-permission {
+        display: none !important;
+      }
+    }
+
+    @media (hover: none), (pointer: coarse) {
+      html,
+      body,
+      #badge-app,
+      #badge-canvas {
+        touch-action: pan-y;
+      }
+    }
   </style>
 </head>
 <body>
   <div id="badge-app">
     <canvas id="badge-canvas"></canvas>
+    <button id="motion-permission" class="motion-permission" type="button" aria-label="Ativar movimento por inclinação">Ativar movimento</button>
   </div>
 
   <script type="module">
@@ -150,6 +196,8 @@
 
     const app = document.getElementById('badge-app')
     const canvas = document.getElementById('badge-canvas')
+    const motionButton = document.getElementById('motion-permission')
+    const isMobileMotionDevice = window.matchMedia && window.matchMedia('(hover: none), (pointer: coarse), (max-width: 760px)').matches
 
     function setSgsCursor(type) {
   document.documentElement.classList.remove('sgs-cursor-grab', 'sgs-cursor-grabbing')
@@ -620,6 +668,126 @@ ctx.restore()
     function v3(v) { return new THREE.Vector3(v.x, v.y, v.z) }
     function q4(q) { return new THREE.Quaternion(q.x, q.y, q.z, q.w) }
 
+    const mobileMotion = {
+      enabled: false,
+      listening: false,
+      hasSample: false,
+      baseBeta: 0,
+      baseGamma: 0,
+      baseMotionX: 0,
+      baseMotionY: 0,
+      hasMotionSample: false,
+      targetX: 0,
+      targetY: 0,
+      currentX: 0,
+      currentY: 0,
+      lastWake: 0
+    }
+
+    function clampMotion(value, min, max) {
+      return Math.min(Math.max(value, min), max)
+    }
+
+    function normalizeMotion(value) {
+      return Math.abs(value) < 0.028 ? 0 : value
+    }
+
+    function showMotionButton(show) {
+      if (!motionButton || !isMobileMotionDevice) return
+      motionButton.classList.toggle('is-visible', !!show)
+    }
+
+    function handleDeviceOrientation(event) {
+      if (!isMobileMotionDevice || event.beta == null || event.gamma == null) return
+
+      if (!mobileMotion.hasSample) {
+        mobileMotion.hasSample = true
+        mobileMotion.baseBeta = event.beta
+        mobileMotion.baseGamma = event.gamma
+      }
+
+      mobileMotion.enabled = true
+      showMotionButton(false)
+      mobileMotion.targetX = normalizeMotion(clampMotion((event.gamma - mobileMotion.baseGamma) / 28, -1, 1))
+      mobileMotion.targetY = normalizeMotion(clampMotion((event.beta - mobileMotion.baseBeta) / 34, -1, 1))
+    }
+
+    function handleDeviceMotion(event) {
+      if (!isMobileMotionDevice || mobileMotion.hasSample) return
+      const gravity = event.accelerationIncludingGravity
+      if (!gravity || gravity.x == null || gravity.y == null) return
+
+      if (!mobileMotion.hasMotionSample) {
+        mobileMotion.hasMotionSample = true
+        mobileMotion.baseMotionX = gravity.x
+        mobileMotion.baseMotionY = gravity.y
+      }
+
+      mobileMotion.enabled = true
+      showMotionButton(false)
+      mobileMotion.targetX = normalizeMotion(clampMotion((gravity.x - mobileMotion.baseMotionX) / 5.8, -1, 1))
+      mobileMotion.targetY = normalizeMotion(clampMotion((gravity.y - mobileMotion.baseMotionY) / 6.8, -1, 1))
+    }
+
+    function startMobileMotion() {
+      if (!isMobileMotionDevice || mobileMotion.listening) return
+      if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', handleDeviceOrientation, { passive: true })
+      }
+      if (window.DeviceMotionEvent) {
+        window.addEventListener('devicemotion', handleDeviceMotion, { passive: true })
+      }
+      mobileMotion.listening = true
+      mobileMotion.enabled = true
+      showMotionButton(false)
+    }
+
+    async function requestMobileMotion() {
+      if (!isMobileMotionDevice) return
+
+      try {
+        if (window.DeviceOrientationEvent && typeof window.DeviceOrientationEvent.requestPermission === 'function') {
+          const orientationState = await window.DeviceOrientationEvent.requestPermission()
+          let motionState = orientationState
+          if (window.DeviceMotionEvent && typeof window.DeviceMotionEvent.requestPermission === 'function') {
+            motionState = await window.DeviceMotionEvent.requestPermission()
+          }
+          if (orientationState === 'granted' || motionState === 'granted') startMobileMotion()
+          else {
+            motionButton.textContent = 'Movimento bloqueado'
+            showMotionButton(true)
+          }
+          return
+        }
+
+        startMobileMotion()
+      } catch (error) {
+        console.warn('Motion permission was not granted.', error)
+        showMotionButton(true)
+      }
+    }
+
+    if (isMobileMotionDevice && window.DeviceOrientationEvent) {
+      if (typeof window.DeviceOrientationEvent.requestPermission === 'function') {
+        motionButton.textContent = 'Ativar balanço'
+        showMotionButton(true)
+      } else {
+        startMobileMotion()
+      }
+    }
+
+    if (motionButton) {
+      motionButton.addEventListener('pointerdown', function (event) {
+        event.stopPropagation()
+      })
+
+      motionButton.addEventListener('click', function (event) {
+        event.preventDefault()
+        event.stopPropagation()
+        requestMobileMotion()
+      })
+    }
+
     const curve = new THREE.CatmullRomCurve3([
       new THREE.Vector3(),
       new THREE.Vector3(),
@@ -813,48 +981,91 @@ ctx.restore()
       return new THREE.Vector3(t.x, t.y, t.z)
     }
 
-    app.addEventListener('pointermove', (e) => {
-      setPointer(e)
-      if (!dragged) {
+    if (!isMobileMotionDevice) {
+      app.addEventListener('pointermove', (e) => {
+        setPointer(e)
+        if (!dragged) {
+          raycaster.setFromCamera(pointer, camera)
+          const hits = raycaster.intersectObject(hitPlane, true)
+          hovered = hits.length > 0
+          setSgsCursor(hovered ? 'grab' : 'default')
+        } else {
+          setSgsCursor('grabbing')
+        }
+      })
+
+      app.addEventListener('pointerdown', (e) => {
+        setPointer(e)
         raycaster.setFromCamera(pointer, camera)
         const hits = raycaster.intersectObject(hitPlane, true)
-        hovered = hits.length > 0
-        setSgsCursor(hovered ? 'grab' : 'default')
-      } else {
+        if (!hits.length) return
+        dragged = true
+        dragOffset.copy(hits[0].point).sub(cardPosition())
+        card.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased, true)
+        fixed.wakeUp()
+        j1.wakeUp()
+        j2.wakeUp()
+        j3.wakeUp()
+        card.wakeUp()
         setSgsCursor('grabbing')
-      }
-    })
+      })
 
-    app.addEventListener('pointerdown', (e) => {
-      setPointer(e)
-      raycaster.setFromCamera(pointer, camera)
-      const hits = raycaster.intersectObject(hitPlane, true)
-      if (!hits.length) return
-      dragged = true
-      dragOffset.copy(hits[0].point).sub(cardPosition())
-      card.setBodyType(RAPIER.RigidBodyType.KinematicPositionBased, true)
-      fixed.wakeUp()
-      j1.wakeUp()
-      j2.wakeUp()
-      j3.wakeUp()
-      card.wakeUp()
-      setSgsCursor('grabbing')
-    })
-
-    window.addEventListener('pointerup', () => {
-      if (!dragged) return
-      dragged = false
-      card.setBodyType(RAPIER.RigidBodyType.Dynamic, true)
-      setSgsCursor(hovered ? 'grab' : 'default')
-    })
+      window.addEventListener('pointerup', () => {
+        if (!dragged) return
+        dragged = false
+        card.setBodyType(RAPIER.RigidBodyType.Dynamic, true)
+        setSgsCursor(hovered ? 'grab' : 'default')
+      })
+    }
 
     const lerpedJ1 = new THREE.Vector3()
     const lerpedJ2 = new THREE.Vector3()
     let initLerp = false
 
+    function wakeBadgeChain(now) {
+      if (now - mobileMotion.lastWake < 120) return
+      mobileMotion.lastWake = now
+      fixed.wakeUp()
+      j1.wakeUp()
+      j2.wakeUp()
+      j3.wakeUp()
+      card.wakeUp()
+    }
+
+    function applyMobileMotion(delta) {
+      if (!isMobileMotionDevice || !mobileMotion.enabled || dragged) {
+        if (isMobileMotionDevice) world.gravity = { x: 0, y: -40, z: 0 }
+        return
+      }
+
+      mobileMotion.currentX += (mobileMotion.targetX - mobileMotion.currentX) * 0.06
+      mobileMotion.currentY += (mobileMotion.targetY - mobileMotion.currentY) * 0.06
+
+      const x = mobileMotion.currentX
+      const y = mobileMotion.currentY
+      world.gravity = {
+        x: x * 5.5,
+        y: -40,
+        z: y * 2.1
+      }
+
+      if (Math.abs(x) + Math.abs(y) > 0.035) {
+        wakeBadgeChain(performance.now())
+
+        if (typeof card.applyTorqueImpulse === 'function') {
+          card.applyTorqueImpulse({
+            x: y * 0.001 * delta * 60,
+            y: 0,
+            z: -x * 0.00135 * delta * 60
+          }, true)
+        }
+      }
+    }
+
     function animate() {
       requestAnimationFrame(animate)
       const delta = Math.min(clock.getDelta(), 1 / 30)
+      applyMobileMotion(delta)
 
       if (dragged) {
         tmpVec.set(pointer.x, pointer.y, 0.5).unproject(camera)
