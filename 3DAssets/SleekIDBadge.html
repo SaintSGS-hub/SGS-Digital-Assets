@@ -130,15 +130,15 @@
     }
 
     .motion-permission {
-      position: fixed;
+      position: absolute;
       left: 50%;
-      bottom: max(18px, env(safe-area-inset-bottom, 0px));
+      top: min(44%, 430px);
       z-index: 20;
-      transform: translate3d(-50%, 10px, 0);
+      transform: translate3d(-50%, -50%, 0) scale(0.98);
       border: 1px solid rgba(255, 177, 23, 0.34);
       border-radius: 999px;
-      padding: 10px 14px;
-      background: rgba(5, 5, 5, 0.62);
+      padding: 11px 15px;
+      background: rgba(5, 5, 5, 0.72);
       color: rgba(255, 248, 230, 0.88);
       font: 700 11px/1 Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       letter-spacing: 0.12em;
@@ -149,6 +149,7 @@
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
+      white-space: nowrap;
       transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
     }
 
@@ -156,7 +157,7 @@
       opacity: 1;
       visibility: visible;
       pointer-events: auto;
-      transform: translate3d(-50%, 0, 0);
+      transform: translate3d(-50%, -50%, 0) scale(1);
     }
 
     @media (hover: hover) and (pointer: fine) {
@@ -681,6 +682,8 @@ ctx.restore()
       targetY: 0,
       currentX: 0,
       currentY: 0,
+      lastOrientationAt: 0,
+      permissionRequested: false,
       lastWake: 0
     }
 
@@ -689,7 +692,7 @@ ctx.restore()
     }
 
     function normalizeMotion(value) {
-      return Math.abs(value) < 0.028 ? 0 : value
+      return Math.abs(value) < 0.015 ? 0 : value
     }
 
     function showMotionButton(show) {
@@ -707,13 +710,15 @@ ctx.restore()
       }
 
       mobileMotion.enabled = true
+      mobileMotion.lastOrientationAt = performance.now()
       showMotionButton(false)
-      mobileMotion.targetX = normalizeMotion(clampMotion((event.gamma - mobileMotion.baseGamma) / 28, -1, 1))
-      mobileMotion.targetY = normalizeMotion(clampMotion((event.beta - mobileMotion.baseBeta) / 34, -1, 1))
+      mobileMotion.targetX = normalizeMotion(clampMotion((event.gamma - mobileMotion.baseGamma) / 18, -1, 1))
+      mobileMotion.targetY = normalizeMotion(clampMotion((event.beta - mobileMotion.baseBeta) / 24, -1, 1))
     }
 
     function handleDeviceMotion(event) {
-      if (!isMobileMotionDevice || mobileMotion.hasSample) return
+      if (!isMobileMotionDevice) return
+      if (mobileMotion.hasSample && performance.now() - mobileMotion.lastOrientationAt < 480) return
       const gravity = event.accelerationIncludingGravity
       if (!gravity || gravity.x == null || gravity.y == null) return
 
@@ -725,14 +730,15 @@ ctx.restore()
 
       mobileMotion.enabled = true
       showMotionButton(false)
-      mobileMotion.targetX = normalizeMotion(clampMotion((gravity.x - mobileMotion.baseMotionX) / 5.8, -1, 1))
-      mobileMotion.targetY = normalizeMotion(clampMotion((gravity.y - mobileMotion.baseMotionY) / 6.8, -1, 1))
+      mobileMotion.targetX = normalizeMotion(clampMotion((gravity.x - mobileMotion.baseMotionX) / 4.2, -1, 1))
+      mobileMotion.targetY = normalizeMotion(clampMotion((gravity.y - mobileMotion.baseMotionY) / 5.2, -1, 1))
     }
 
     function startMobileMotion() {
       if (!isMobileMotionDevice || mobileMotion.listening) return
       if (window.DeviceOrientationEvent) {
         window.addEventListener('deviceorientation', handleDeviceOrientation, { passive: true })
+        window.addEventListener('deviceorientationabsolute', handleDeviceOrientation, { passive: true })
       }
       if (window.DeviceMotionEvent) {
         window.addEventListener('devicemotion', handleDeviceMotion, { passive: true })
@@ -744,6 +750,8 @@ ctx.restore()
 
     async function requestMobileMotion() {
       if (!isMobileMotionDevice) return
+      mobileMotion.permissionRequested = true
+      showMotionButton(false)
 
       try {
         if (window.DeviceOrientationEvent && typeof window.DeviceOrientationEvent.requestPermission === 'function') {
@@ -767,8 +775,8 @@ ctx.restore()
       }
     }
 
-    if (isMobileMotionDevice && window.DeviceOrientationEvent) {
-      if (typeof window.DeviceOrientationEvent.requestPermission === 'function') {
+    if (isMobileMotionDevice && (window.DeviceOrientationEvent || window.DeviceMotionEvent)) {
+      if (window.DeviceOrientationEvent && typeof window.DeviceOrientationEvent.requestPermission === 'function') {
         motionButton.textContent = 'Ativar balanço'
         showMotionButton(true)
       } else {
@@ -1038,25 +1046,25 @@ ctx.restore()
         return
       }
 
-      mobileMotion.currentX += (mobileMotion.targetX - mobileMotion.currentX) * 0.06
-      mobileMotion.currentY += (mobileMotion.targetY - mobileMotion.currentY) * 0.06
+      mobileMotion.currentX += (mobileMotion.targetX - mobileMotion.currentX) * 0.1
+      mobileMotion.currentY += (mobileMotion.targetY - mobileMotion.currentY) * 0.1
 
       const x = mobileMotion.currentX
       const y = mobileMotion.currentY
       world.gravity = {
-        x: x * 5.5,
+        x: x * 9,
         y: -40,
-        z: y * 2.1
+        z: y * 4
       }
 
-      if (Math.abs(x) + Math.abs(y) > 0.035) {
+      if (Math.abs(x) + Math.abs(y) > 0.02) {
         wakeBadgeChain(performance.now())
 
         if (typeof card.applyTorqueImpulse === 'function') {
           card.applyTorqueImpulse({
-            x: y * 0.001 * delta * 60,
+            x: y * 0.0018 * delta * 60,
             y: 0,
-            z: -x * 0.00135 * delta * 60
+            z: -x * 0.0022 * delta * 60
           }, true)
         }
       }
