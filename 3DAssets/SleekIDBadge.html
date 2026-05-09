@@ -134,7 +134,7 @@
       body,
       #badge-app,
       #badge-canvas {
-        touch-action: none;
+        touch-action: pan-y;
       }
     }
   </style>
@@ -637,6 +637,7 @@ ctx.restore()
       currentX: 0,
       currentY: 0,
       drag: false,
+      active: false,
       startX: 0,
       startY: 0,
       lastWake: 0
@@ -650,12 +651,18 @@ ctx.restore()
       return Math.abs(value) < 0.015 ? 0 : value
     }
 
-    function updateTouchMotion(event) {
-      const dx = ((event.clientX || 0) - mobileMotion.startX) / 92
-      const dy = ((event.clientY || 0) - mobileMotion.startY) / 122
+    function updateTouchMotion(dx, dy) {
       mobileMotion.enabled = true
-      mobileMotion.targetX = normalizeMotion(clampMotion(dx, -1, 1))
-      mobileMotion.targetY = normalizeMotion(clampMotion(dy, -1, 1))
+      mobileMotion.targetX = normalizeMotion(clampMotion(dx / 92, -1, 1))
+      mobileMotion.targetY = normalizeMotion(clampMotion(dy / 122, -1, 1))
+      wakeBadgeChain(performance.now())
+    }
+
+    function releaseTouchMotion() {
+      mobileMotion.drag = false
+      mobileMotion.active = false
+      mobileMotion.targetX = 0
+      mobileMotion.targetY = 0
       wakeBadgeChain(performance.now())
     }
 
@@ -664,30 +671,30 @@ ctx.restore()
 
       app.addEventListener('pointerdown', function (event) {
         mobileMotion.drag = true
+        mobileMotion.active = false
         mobileMotion.startX = event.clientX || 0
         mobileMotion.startY = event.clientY || 0
-        updateTouchMotion(event)
-        if (app.setPointerCapture && event.pointerId != null) {
-          try { app.setPointerCapture(event.pointerId) } catch (error) {}
-        }
       })
 
       app.addEventListener('pointermove', function (event) {
         if (!mobileMotion.drag) return
-        updateTouchMotion(event)
-      })
+        const dx = (event.clientX || 0) - mobileMotion.startX
+        const dy = (event.clientY || 0) - mobileMotion.startY
+        const absX = Math.abs(dx)
+        const absY = Math.abs(dy)
 
-      window.addEventListener('pointermove', function (event) {
-        if (!mobileMotion.drag) return
-        updateTouchMotion(event)
-      })
+        if (!mobileMotion.active) {
+          if (absY > 8 && absY > absX * 1.15) {
+            releaseTouchMotion()
+            return
+          }
 
-      function releaseTouchMotion() {
-        mobileMotion.drag = false
-        mobileMotion.targetX = 0
-        mobileMotion.targetY = 0
-        wakeBadgeChain(performance.now())
-      }
+          if (absX < 6 && absY < 6) return
+          mobileMotion.active = true
+        }
+
+        updateTouchMotion(dx, dy)
+      })
 
       window.addEventListener('pointerup', releaseTouchMotion)
       window.addEventListener('pointercancel', releaseTouchMotion)
