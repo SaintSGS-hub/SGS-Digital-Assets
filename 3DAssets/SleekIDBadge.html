@@ -16,6 +16,18 @@
       height: 100%;
       background: transparent;
       font-family: Inter, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    html::selection,
+    body::selection,
+    #badge-app::selection,
+    #badge-canvas::selection {
+      background: transparent;
+      color: inherit;
     }
 
     #badge-app {
@@ -26,6 +38,10 @@
       overflow: hidden;
       background: transparent;
       isolation: isolate;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     #badge-canvas {
@@ -34,6 +50,11 @@
       width: 100%;
       height: 100%;
       display: block;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     /* ============================
